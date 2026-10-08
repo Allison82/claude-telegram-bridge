@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.YOUR_USERNAME.telegram-watchdog</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <!-- must point at a plain home-directory path, NOT ~/Desktop,
+             ~/Documents or ~/Downloads (macOS TCC blocks launchd-spawned
+             processes from touching those three — see docs/SETUP.md) -->
+        <string>/YOUR_HOME/.claude/channels/telegram/watchdog/check_and_reconnect.sh</string>
+    </array>
+
+    <!-- run every 120 seconds -->
+    <key>StartInterval</key>
+    <integer>120</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/YOUR_HOME/.claude/channels/telegram/watchdog/launchd_stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/YOUR_HOME/.claude/channels/telegram/watchdog/launchd_stderr.log</string>
+</dict>
+</plist>

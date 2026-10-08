@@ -1,0 +1,6 @@
+{
+  "dmPolicy": "allowlist",
+  "allowFrom": ["YOUR_CHAT_ID_AS_STRING"],
+  "groups": {},
+  "pending": {}
+}

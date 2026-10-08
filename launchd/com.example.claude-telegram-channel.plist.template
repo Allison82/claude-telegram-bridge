@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.YOUR_USERNAME.claude-telegram-channel</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <!-- claude binary path, usually /usr/local/bin/claude or ~/.local/bin/claude -->
+        <string>/PATH/TO/claude</string>
+        <!-- pin a fixed session id (find with `claude --list-sessions`) so
+             conversation memory survives restarts -->
+        <string>--resume</string>
+        <string>YOUR_SESSION_ID_HERE</string>
+        <string>--channels</string>
+        <string>plugin:telegram@claude-plugins-official</string>
+        <string>--dangerously-skip-permissions</string>
+    </array>
+
+    <!-- start automatically at login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- auto-restart within 30s if it dies -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <!-- replace YOUR_HOME, e.g. /Users/yourname -->
+    <key>StandardOutPath</key>
+    <string>/YOUR_HOME/.claude/channels/telegram/launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/YOUR_HOME/.claude/channels/telegram/launchd.err.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/YOUR_HOME</string>
+</dict>
+</plist>

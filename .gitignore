@@ -1,0 +1,9 @@
+# Never commit real secrets or personal config derived from this template
+.env
+*.env
+access.json.local
+*.token
+*secrets*
+
+# OS cruft
+.DS_Store
