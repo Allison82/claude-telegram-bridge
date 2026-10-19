@@ -13,6 +13,11 @@
              conversation memory survives restarts -->
         <string>--resume</string>
         <string>YOUR_SESSION_ID_HERE</string>
+        <!-- optional: pin a model. If the resumed session ever gets blocked by
+             safeguards ("Start a new session to continue"), switching model
+             can keep the memory. See docs/TROUBLESHOOTING_LOG.md -->
+        <!-- <string>--model</string> -->
+        <!-- <string>opus</string> -->
         <string>--channels</string>
         <string>plugin:telegram@claude-plugins-official</string>
         <string>--dangerously-skip-permissions</string>

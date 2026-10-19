@@ -272,6 +272,9 @@ launchctl kickstart -k gui/$(id -u)/com.YOUR_USERNAME.telegram-watchdog
 「實際發一則新訊息」的端對端測試；測試沒過，直接跳去檢查 `CLAUDE.md` 的 reply
 規則寫法，不用再繞 process 層瞎找。
 
+**其他實戰案例**（登入過期、長期 session 被 safeguards 擋住、如何換模型保留記憶）見
+`docs/TROUBLESHOOTING_LOG.md`。
+
 ---
 
 ## 十、檔案位置速查

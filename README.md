@@ -26,6 +26,7 @@ demo，是一套實測過、踩過好幾個坑之後整理出來的正式常駐�
 | 路徑 | 說明 |
 |------|------|
 | `docs/SETUP.md` | 完整安裝教學（中文），含 launchd 常駐、watchdog、遠端修復、踩過的坑 |
+| `docs/TROUBLESHOOTING_LOG.md` | 實戰排錯 Q&A：登入過期、session 被 safeguards 擋（換模型保留記憶）、👀 已讀反應 |
 | `launchd/*.plist.template` | launchd plist 範本，填入你的路徑和 session id |
 | `scripts/check_and_reconnect.sh` | 斷線自動偵測 + 重連腳本 |
 | `templates/access.json` | access.json 範本，填入你的 chat_id |
