@@ -122,6 +122,27 @@ claude -p --resume <OLD_SESSION_ID> --fork-session --model opus "測試：只回
 
 ---
 
+## 2026-10-20：把上面兩個案例做成自動修復
+
+手動修了兩次以後，乾脆寫成 `scripts/auto_repair.py`，掛在 watchdog 上每 2 分鐘
+跑一次（說明見 `SETUP.md` 第六節）：
+
+- 判斷依據是 transcript 裡的 API 錯誤列，不是 `out.log` 的終端機畫面。
+  `--resume` 重開時畫面會把舊對話（包括舊的錯誤訊息）重畫一遍，看畫面會誤判。
+  transcript 的錯誤列是結構化 JSON，例如：
+  ```json
+  {"isApiErrorMessage": true, "error": "authentication_failed", ...}
+  {"isApiErrorMessage": true, "error": "invalid_request",
+   "message": {"stop_reason": "refusal", "stop_details": {"category": "..."}}}
+  ```
+- 被擋時一定先試「換模型、保留記憶」，全部失敗才換新 session。這是使用者
+  明確的要求：不希望記憶不見。
+- 換新 session 時先用 `claude -p --session-id <uuid>` 把 session 檔建好，
+  plist 就能直接寫 `--resume <uuid>`，不必走「先 `--session-id`、等第一則
+  訊息、再改回 `--resume`」的兩段式切換。
+
+---
+
 ## 小優化：收到訊息先按 👀
 
 讓 bot 一收到訊息就先在那則訊息上加 👀，使用者可以馬上看出「它有收到、正在
@@ -145,5 +166,6 @@ claude -p --resume <OLD_SESSION_ID> --fork-session --model opus "測試：只回
 4. 依症狀處理：
    - Login expired → `/login` + `kickstart -k`
    - 被 safeguards 擋 → 先試解法 B（換模型、保留記憶），不行再用解法 A
+     （裝了 `scripts/auto_repair.py` 的話，這一步和 Login expired 都會自動處理）
    - 以上都沒有 → 見 `SETUP.md` 第九節（reply 工具沒被呼叫的 prompt 問題）
 5. 最後一定要實際傳一則訊息，做端對端測試

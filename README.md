@@ -7,6 +7,8 @@ demo，是一套實測過、踩過好幾個坑之後整理出來的正式常駐�
   對話記憶不會斷
 - **Watchdog 補洞**：launchd 的 `KeepAlive` 抓不到「外層活著、內層子行程死掉」
   這種斷線，另外補一支背景監控腳本
+- **錯誤自動修復**：登入過期自動重啟；session 被 safeguards 擋住時先換模型
+  保留記憶，不行才換新 session；每次處理都傳 Telegram 通知
 - **遠端一句話修復**：人在外地碰不到電腦時，Telegram 傳「repair」自動更新
   plugin + 重啟服務
 - **把實測踩過的坑都記下來**：包含一個「process/webhook 全部正常、但就是沒
@@ -29,6 +31,7 @@ demo，是一套實測過、踩過好幾個坑之後整理出來的正式常駐�
 | `docs/TROUBLESHOOTING_LOG.md` | 實戰排錯 Q&A：登入過期、session 被 safeguards 擋（換模型保留記憶）、👀 已讀反應 |
 | `launchd/*.plist.template` | launchd plist 範本，填入你的路徑和 session id |
 | `scripts/check_and_reconnect.sh` | 斷線自動偵測 + 重連腳本 |
+| `scripts/auto_repair.py` | 錯誤自動修復（登入過期／被擋／太長），由上面的腳本呼叫 |
 | `templates/access.json` | access.json 範本，填入你的 chat_id |
 | `claude-md-snippets/` | 要加進 `~/CLAUDE.md` 的規則片段 |
 

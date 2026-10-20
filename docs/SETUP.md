@@ -188,8 +188,8 @@ process 活著、但裡面真正負責跟 Telegram 通訊的 bun 子行程死掉
 
 ```bash
 mkdir -p ~/.claude/channels/telegram/watchdog
-cp scripts/check_and_reconnect.sh ~/.claude/channels/telegram/watchdog/
-chmod +x ~/.claude/channels/telegram/watchdog/check_and_reconnect.sh
+cp scripts/check_and_reconnect.sh scripts/auto_repair.py ~/.claude/channels/telegram/watchdog/
+chmod +x ~/.claude/channels/telegram/watchdog/check_and_reconnect.sh ~/.claude/channels/telegram/watchdog/auto_repair.py
 # 編輯這個檔案，把開頭的 LAUNCHD_LABEL 換成你實際的 Label
 
 cp launchd/com.example.telegram-watchdog.plist.template ~/Library/LaunchAgents/com.YOUR_USERNAME.telegram-watchdog.plist
@@ -198,6 +198,28 @@ cp launchd/com.example.telegram-watchdog.plist.template ~/Library/LaunchAgents/c
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.YOUR_USERNAME.telegram-watchdog.plist
 launchctl kickstart -k gui/$(id -u)/com.YOUR_USERNAME.telegram-watchdog
 ```
+
+### 自動修復：登入過期／被 safeguards 擋／對話太長
+
+上面只能抓到「process 不見了」。process 都活著、但每則訊息都回錯誤的情況
+（登入過期、session 被安全機制擋住、context 太長）它看不到。
+`scripts/auto_repair.py` 補這一塊。`check_and_reconnect.sh` 每次跑完都會呼叫它，
+它只讀固定 session 的 transcript 裡**新增**的 API 錯誤列：
+
+| 錯誤 | 自動處理 | 對話記憶 |
+|---|---|---|
+| `authentication_failed`（Login expired / 401） | `kickstart -k`；30 分鐘內 2 次無效 → TG 通知去電腦 `/login` | 保留 |
+| `refusal`（"Start a new session to continue"） | 用 `--fork-session` 測其他模型，能過就改 plist 的 `--model` 繼續原 session | 保留 |
+| 換模型都不行，或 "Prompt is too long" | 先用 `claude -p --session-id <新uuid>` 建好新 session，再把 plist 的 `--resume` 指過去 | 失去（舊 transcript 保留） |
+
+保護機制：修完 10 分鐘冷卻、換新 session 6 小時最多一次（超過就只通知不動作），
+改 plist 前會備份成 `watchdog/plist.before_auto_repair.plist`，並用 flock 防止
+上一輪還沒跑完（fork 測試可能要幾分鐘）就重複執行。通知是直接打 Bot API，
+所以就算 Claude 本身掛了也收得到。
+
+前提：主 plist 的 `ProgramArguments` 要用 `--resume <SESSION_ID>`（可選
+`--model`），`WorkingDirectory` 要是 `$HOME`，這樣才算得出 transcript 路徑。
+第一次執行只會記下目前 transcript 的位置，不會追溯舊錯誤。
 
 ---
 

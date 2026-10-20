@@ -89,3 +89,7 @@ if [ "$need_restart" = "1" ]; then
     echo "$(ts) disconnect detected: ${reason}, but last kickstart was ${elapsed}s ago, skipping" >> "$LOG"
   fi
 fi
+
+# Watch the pinned session's transcript for new API errors (login expired /
+# blocked by safeguards / prompt too long) and auto-repair. See auto_repair.py.
+LAUNCHD_LABEL="$LAUNCHD_LABEL" /usr/bin/python3 "$BASE_DIR/auto_repair.py" >> "$BASE_DIR/auto_repair.log" 2>&1
