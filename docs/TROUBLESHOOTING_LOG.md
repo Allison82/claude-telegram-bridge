@@ -143,6 +143,44 @@ claude -p --resume <OLD_SESSION_ID> --fork-session --model opus "測試：只回
 
 ---
 
+## 2026-10-27：終端機開了另一個 Claude，bot 被搶線
+
+**症狀**：Telegram 完全沒回應。`launchctl print` 是 `running`，登入沒過期，
+`out.log` 也沒有錯誤，舊 watchdog 也沒報警。
+
+**診斷**：
+
+```bash
+ps -eo pid,ppid,etime,command | grep -E "bun server.ts|channels plugin:telegram" | grep -v grep
+```
+
+`bun server.ts` 只有一個，但它的上層是**互動終端機的 `claude --chrome --resume`**，
+不是 launchd 那條。launchd 那條底下沒有 bun。
+
+**原因**：在終端機用 `claude --chrome` 重開時，那個互動 session 也載入了
+telegram 外掛，起了自己的 `bun server.ts`，把 bot 的 long-poll 搶走。舊 watchdog
+只數「全機有幾個 bun」，數到的是搶線的那個，所以沒發現。
+
+**解法**：
+
+```bash
+pkill -f "bun server.ts"
+launchctl kickstart -k gui/$(id -u)/com.YOUR_USERNAME.claude-telegram-channel
+```
+
+等 30 秒，傳一則訊息做端對端測試。
+
+**自動化**：`scripts/check_and_reconnect.sh` 加了搶線偵測，只認 launchd job pid
+底下的 bun。其他來源的 bun 一律關掉；launchd 那條沒有 bun 就 `kickstart -k`，
+並用 Bot API 通知使用者（一小時最多一次）。
+
+**教訓**：
+- 關 process 時要看**執行檔名稱**（`ps -o comm=`），不要看指令文字。測試時，
+  一個指令文字裡剛好含 `bun server.ts` 的 shell 被誤關了。
+- 在終端機工作時要傳 TG，直接呼叫 Bot API `sendMessage`，不要載入 telegram 外掛。
+
+---
+
 ## 小優化：收到訊息先按 👀
 
 讓 bot 一收到訊息就先在那則訊息上加 👀，使用者可以馬上看出「它有收到、正在
@@ -161,6 +199,7 @@ claude -p --resume <OLD_SESSION_ID> --fork-session --model opus "測試：只回
 
 1. `launchctl print ...` → state 是不是 running
 2. `ps -ef | grep ...` → 是否剛好一組 chain，而且底下有 `bun server.ts`
+   （`bun server.ts` 的上層不是 launchd 那條 → 被別的 session 搶線，見 2026-10-27）
 3. `tail -c 4000 launchd.out.log` → 找 `Login expired`、`can't help with this`、
    `Start a new session`
 4. 依症狀處理：
