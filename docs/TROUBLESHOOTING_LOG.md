@@ -181,6 +181,54 @@ launchctl kickstart -k gui/$(id -u)/com.YOUR_USERNAME.claude-telegram-channel
 
 ---
 
+## 2026-11-13：怎麼「主動」不搶線（而不是等 watchdog 補救）
+
+**背景**：上面 2026-10-27 是「已經被搶線了怎麼修」。這一則是「一開始就不要讓它互搶」。
+
+**為什麼同一時間只能有一個視窗用 Telegram**：Telegram bot 靠 long-poll
+（`getUpdates`）收訊息，同一個 bot 同一時間只能有一個 consumer 在輪詢。誰最後
+啟動 telegram 外掛、起了 `bun server.ts`，誰就把連線搶過去，前一個就收不到訊息
+了。所以關鍵不是「開了幾個 Claude 視窗」，而是「有幾個視窗載入了 telegram 外掛」。
+
+**三種情況**：
+
+1. 只有 launchd 常駐那一個視窗載 telegram 外掛 → 正常，沒人搶。
+2. 你又在終端機開了一個「普通」`claude`（會自動載入使用者/專案的所有外掛，
+   包含 telegram）→ 它會搶線。交給 watchdog 在約 2 分鐘內自動修（見 2026-10-27）。
+3. 你開第二個視窗，但用乾淨模式（見下）→ 它不載 telegram 外掛，永遠不會搶。
+
+**主動避免的兩個做法**：
+
+- 最簡單：**同一時間只留一個會用 Telegram 的 Claude 視窗**。手機要用 bot 時，
+  電腦就不要再另開普通的 claude。
+- 需要第二個視窗做別的事、或有背景常駐的 `claude -p`（例如本機語音助理的
+  「腦」）→ 用 `--strict-mcp-config` 開：
+
+  ```bash
+  claude --strict-mcp-config              # 互動視窗
+  claude -p --strict-mcp-config "..."     # 背景常駐的腦
+  ```
+
+  `--strict-mcp-config` 會讓這個 session **只吃命令列明確指定的 MCP 設定、不自動
+  載入使用者/專案的 MCP 外掛**，所以它根本不會啟動 telegram 外掛，也就起不了
+  `bun server.ts`、搶不到 bot。本專案作者的本機語音助理背景會一直跑 `claude -p`
+  當「腦」，就是靠這個旗標跟常駐的 Telegram bot 井水不犯河水。
+
+**怎麼確認現在沒人搶線**：
+
+```bash
+ps -eo pid,ppid,command | grep -E "bun server.ts" | grep -v grep
+```
+
+只該有一個 `bun server.ts`，而且它的上層要能追到 launchd 那條
+`com.YOUR_USERNAME.claude-telegram-channel`。如果冒出第二個、或它的上層是互動
+終端機的 claude，就是被搶線了（處理方式見 2026-10-27）。
+
+**一句話**：決定會不會搶線的是「有沒有載 telegram 外掛」，不是「有沒有開第二個
+視窗」。第二個視窗只要用 `--strict-mcp-config` 開，就天下太平。
+
+---
+
 ## 小優化：收到訊息先按 👀
 
 讓 bot 一收到訊息就先在那則訊息上加 👀，使用者可以馬上看出「它有收到、正在
